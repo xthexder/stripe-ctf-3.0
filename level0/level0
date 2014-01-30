@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+
+path = ARGV.length > 0 ? ARGV[0] : '/usr/share/dict/words'
+entries = File.read(path).split("\n")
+dict = entries.inject({}) {|hsh, sym| hsh[sym] = true; hsh}
+
+contents = $stdin.read
+contents.scan(/([^ \n]+)([ \n]+)/).each { |word, split|
+  if dict[word.downcase]
+    print word
+  else
+    print "<", word, ">"
+  end
+  print split
+}

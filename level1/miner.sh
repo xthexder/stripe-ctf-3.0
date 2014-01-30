@@ -1,0 +1,91 @@
+#!/bin/bash
+
+set -eu
+
+if [ "$#" != 2 ]; then
+    echo >&2 "Usage: $0 <clone_url> <public_username>
+
+A VERY SLOW mining implementation. This should give you an idea of
+where to start, but it probably won't successfully mine you any
+Gitcoins.
+
+Arguments:
+
+<clone_url> is the string you'd pass to git clone (i.e.
+  something of the form username@hostname:path)
+
+<public_username> is the public username provided to you in
+  the CTF web interface."
+    exit 1
+fi
+
+export clone_spec=$1
+export public_username=$2
+
+prepare_index() {
+    perl -i -pe 's/($ENV{public_username}: )(\d+)/$1 . ($2+1)/e' LEDGER.txt
+    grep -q "$public_username" LEDGER.txt || echo "$public_username: 1" >> LEDGER.txt
+
+    git add LEDGER.txt
+}
+
+solve() {
+    # Brute force until you find something that's lexicographically
+    # small than $difficulty.
+    difficulty=$(cat difficulty.txt)
+
+    # Create a Git tree object reflecting our current working
+    # directory
+    tree=$(git write-tree)
+    parent=$(git rev-parse HEAD)
+    timestamp=$(date +%s)
+
+    body=$(../gitcoin $difficulty $tree $parent "$timestamp")
+    echo
+
+	# See http://git-scm.com/book/en/Git-Internals-Git-Objects for
+	# details on Git objects.
+	sha1=$(git hash-object -t commit --stdin <<< "$body")
+    echo $sha1
+
+	if [ "$sha1" "<" "$difficulty" ]; then
+	    echo
+	    echo "Mined a Gitcoin with commit: $sha1"
+	    git hash-object -t commit --stdin -w <<< "$body"  > /dev/null
+	    git reset --hard "$sha1" > /dev/null
+	fi
+}
+
+reset() {
+    git fetch origin master >/dev/null 2>/dev/null
+    git reset --hard origin/master >/dev/null
+}
+
+# Set up repo
+local_path=./${clone_spec##*:}
+
+if [ -d "$local_path" ]; then
+    echo "Using existing repository at $local_path"
+    cd "$local_path"
+    read -p "Ok to run \`git reset --hard\` in $local_path (Y/n)? " reset
+    if [[ "$reset" = [nN]* ]]; then
+	echo "Ok, aborting"
+	exit 1
+    fi
+    reset
+else
+    echo "Cloning repository to $local_path"
+    git clone "$clone_spec" "$local_path"
+    cd "$local_path"
+fi
+
+while true; do
+    prepare_index
+    solve
+    if git push origin master; then
+	echo "Success :)"
+    else
+	echo "Starting over :("
+    fi
+    reset
+done
