@@ -1,7 +1,10 @@
 Stripe CTF 3.0 Solutions
 ========================
 Jacob Wirth (xthexder)  
-[https://stripe-ctf.com/achievements/xthexder](https://stripe-ctf.com/achievements/xthexder)
+[https://stripe-ctf.com/achievements/xthexder](https://web.archive.org/web/20140424194302/https://stripe-ctf.com/achievements/xthexder)  
+[https://stripe-ctf.com/leaderboard](https://web.archive.org/web/20140210001038/https://stripe-ctf.com/leaderboard)
+
+A copy of the original challenge prompts can be found here: https://github.com/ctfs/write-ups-2014/tree/master/stripe-ctf3
 
 Level0
 ------
